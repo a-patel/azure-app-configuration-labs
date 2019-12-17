@@ -1,10 +1,10 @@
 ﻿{
   "iisSettings": {
     "windowsAuthentication": false, 
-    "anonymousAuthentication": true, 
+    "anonymousAuthentication": true,
     "iisExpress": {
-      "applicationUrl": "http://localhost:50311",
-      "sslPort": 0
+      "applicationUrl": "http://localhost:5001",
+      "sslPort": 44301
     }
   },
   "profiles": {
@@ -18,7 +18,7 @@
     "AzureAppConfigurationLabs.Demo": {
       "commandName": "Project",
       "launchBrowser": true,
-      "applicationUrl": "http://localhost:5000",
+      "applicationUrl": "http://localhost:6001",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
