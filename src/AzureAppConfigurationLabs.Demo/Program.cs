@@ -16,17 +16,18 @@ namespace AzureAppConfigurationLabs.Demo
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
-                .ConfigureAppConfiguration((context, builder) =>
-                {
-                    var config = builder.Build();
-
-                    // Way-1
-                    // Connect to Azure App Configuration using the Connection String.
-                    var appConfigurationEndpoint = config["AzureAppConfigurationEndpoint"];
-                    builder.AddAzureAppConfiguration(appConfigurationEndpoint);
-                })
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
+                    webBuilder.ConfigureAppConfiguration((context, config) =>
+                    {
+                        var settings = config.Build();
+
+                        // Way-1
+                        // Connect to Azure App Configuration using the Connection String.
+                        var appConfigurationConnectionString = settings["AzureAppConfiguration:ConnectionString"];
+                        config.AddAzureAppConfiguration(appConfigurationConnectionString);
+                    });
+
                     webBuilder.UseStartup<Startup>();
                 });
     }
