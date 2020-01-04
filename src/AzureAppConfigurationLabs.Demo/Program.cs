@@ -29,6 +29,15 @@ namespace AzureAppConfigurationLabs.Demo
                         // Connect to Azure App Configuration using the Connection String.
                         var appConfigurationConnectionString = settings["AzureAppConfiguration:ConnectionString"];
                         //config.AddAzureAppConfiguration(appConfigurationConnectionString);
+                        config.AddAzureAppConfiguration(options =>
+                        {
+                            options.Connect(appConfigurationConnectionString).ConfigureRefresh((refreshOptions) =>
+                            {
+                                // indicates that all configuration should be refreshed when the given key has changed.
+                                refreshOptions.Register(key: "Settings:Sentinel", refreshAll: true);
+                                refreshOptions.SetCacheExpiration(TimeSpan.FromSeconds(5));
+                            }).UseFeatureFlags();
+                        });
 
 
                         // Way-2
@@ -58,17 +67,17 @@ namespace AzureAppConfigurationLabs.Demo
                         //}
 
 
-                        // Way-3
-                        // Misc: Use App Configuration values as well as Key Vault references.
-                        // You can now access Key Vault references just like any other App Configuration key.
-                        // The config provider will use the KeyVaultClient that you configured to authenticate to Key Vault and retrieve the value.
-                        var azureServiceTokenProvider = new AzureServiceTokenProvider();
-                        var keyVaultClient = new KeyVaultClient(new KeyVaultClient.AuthenticationCallback(azureServiceTokenProvider.KeyVaultTokenCallback));
+                        //// Way-3
+                        //// Misc: Use App Configuration values as well as Key Vault references.
+                        //// You can now access Key Vault references just like any other App Configuration key.
+                        //// The config provider will use the KeyVaultClient that you configured to authenticate to Key Vault and retrieve the value.
+                        //var azureServiceTokenProvider = new AzureServiceTokenProvider();
+                        //var keyVaultClient = new KeyVaultClient(new KeyVaultClient.AuthenticationCallback(azureServiceTokenProvider.KeyVaultTokenCallback));
 
-                        config.AddAzureAppConfiguration(options => 
-                            options.Connect(appConfigurationConnectionString)
-                                .UseAzureKeyVault(keyVaultClient)
-                            );
+                        //config.AddAzureAppConfiguration(options => 
+                        //    options.Connect(appConfigurationConnectionString)
+                        //        .UseAzureKeyVault(keyVaultClient)
+                        //    );
                     });
 
                     webBuilder.UseStartup<Startup>();
