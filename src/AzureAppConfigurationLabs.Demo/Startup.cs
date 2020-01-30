@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.FeatureManagement;
 #endregion
 
 namespace AzureAppConfigurationLabs.Demo
@@ -22,6 +23,8 @@ namespace AzureAppConfigurationLabs.Demo
         {
             // add a Settings model to the service container, which takes its values from the applications configuration.
             services.Configure<Settings>(Configuration.GetSection("Settings"));
+
+            services.AddFeatureManagement();
 
             services.AddControllers();
         }

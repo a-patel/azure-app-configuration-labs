@@ -2,6 +2,7 @@
 using AzureAppConfigurationLabs.Demo.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using Microsoft.FeatureManagement.Mvc;
 #endregion
 
 namespace AzureAppConfigurationLabs.Demo.Controllers
@@ -36,6 +37,18 @@ namespace AzureAppConfigurationLabs.Demo.Controllers
         public IActionResult GetSettings()
         {
             return Ok(_settings);
+        }
+
+        /// <summary>
+        /// Get Settings
+        /// </summary>
+        /// <returns></returns>
+        [FeatureGate(FeatureFlags.Beta)]
+        [HttpGet]
+        [Route("get-beta-settings")]
+        public IActionResult GetBetaSettings()
+        {
+            return Ok("This is Beta feature only");
         }
 
         #endregion
