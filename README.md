@@ -1,5 +1,10 @@
 # azure-app-configuration-labs
-Demo: App Configuration + ASP.NET Core
+Demo: Azure App Configuration + ASP.NET Core
+
+Please refer to below articles written by me on Azure App Configuration:
+
+- [Use Azure App Configuration with ASP.NET Core Application](https://medium.com/aspnetcore/use-azure-app-configuration-with-asp-net-core-application-6bdf0cc851e2)
+- [Azure — Introduction to Azure App Configuration](https://medium.com/awesome-azure/azure-introduction-to-azure-app-configuration-f4a4c43ec5db)
 
 
 ---
