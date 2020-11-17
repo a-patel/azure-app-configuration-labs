@@ -1,4 +1,5 @@
 #region Imports
+using AzureAppConfigurationLabs.Demo.Extensions;
 using AzureAppConfigurationLabs.Demo.Models;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -26,6 +27,8 @@ namespace AzureAppConfigurationLabs.Demo
 
             services.AddFeatureManagement();
 
+            services.AddCustomSwagger();
+
             services.AddControllers();
         }
 
@@ -40,6 +43,8 @@ namespace AzureAppConfigurationLabs.Demo
             app.UseAzureAppConfiguration();
 
             app.UseRouting();
+
+            app.UseCustomSwagger();
 
             app.UseEndpoints(endpoints =>
             {
