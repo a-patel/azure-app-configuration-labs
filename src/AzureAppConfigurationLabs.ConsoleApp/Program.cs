@@ -74,7 +74,7 @@ namespace AzureAppConfigurationLabs.ConsoleApp
                 sb.Clear();
 
                 // Trigger and wait for an async refresh for registered configuration settings
-                await _refresher.Refresh();
+                await _refresher.RefreshAsync();
 
                 sb.AppendLine($"{Configuration["Settings:AppName"]} has been configured to run in {Configuration["Language"]}");
                 sb.AppendLine();
