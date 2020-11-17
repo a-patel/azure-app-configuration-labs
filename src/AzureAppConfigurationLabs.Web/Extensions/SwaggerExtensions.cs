@@ -62,8 +62,8 @@ namespace AzureAppConfigurationLabs.Demo.Extensions
 
             app.UseSwaggerUI(options =>
             {
-                options.SwaggerEndpoint("/swagger/v1/swagger.json", "Azure App Configuration Labs API (V1)");
-                options.DocumentTitle = "Azure App Configuration Labs";
+                options.SwaggerEndpoint("/swagger/v1/swagger.json", "Azure App Configuration (with .NET) Labs API (V1)");
+                options.DocumentTitle = "Azure App Configuration (with .NET) Labs";
                 options.DocExpansion(DocExpansion.None);
                 options.DisplayRequestDuration();
             });
