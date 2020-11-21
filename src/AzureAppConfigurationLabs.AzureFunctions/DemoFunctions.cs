@@ -33,7 +33,7 @@ namespace AzureAppConfigurationLabs.AzureFunctions
 
             builder.AddAzureAppConfiguration(options =>
             {
-                options.Connect(Environment.GetEnvironmentVariable("ConnectionString"))
+                options.Connect(Environment.GetEnvironmentVariable("AzureAppConfigurationConnectionString"))
                     // Configure to reload all configuration if the 'Sentinel' key is modified and
                     // set cache expiration time window to 1 minute.
                     .ConfigureRefresh(refreshOptions =>

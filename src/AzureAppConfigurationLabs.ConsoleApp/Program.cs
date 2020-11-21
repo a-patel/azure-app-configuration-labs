@@ -36,7 +36,7 @@ namespace AzureAppConfigurationLabs.ConsoleApp
 
             var configuration = builder.Build();
 
-            if (string.IsNullOrEmpty(configuration["ConnectionString"]))
+            if (string.IsNullOrEmpty(configuration["AzureAppConfigurationConnectionString"]))
             {
                 Console.WriteLine("Connection string not found.");
                 Console.WriteLine("Please set the 'ConnectionString' environment variable to a valid Azure App Configuration connection string and re-run this example.");
@@ -47,7 +47,7 @@ namespace AzureAppConfigurationLabs.ConsoleApp
             // Pull the connection string from an environment variable
             builder.AddAzureAppConfiguration(options =>
             {
-                options.Connect(configuration["ConnectionString"])
+                options.Connect(configuration["AzureAppConfigurationConnectionString"])
                        .Select("Settings:AppName")
                        .Select("Settings:BackgroundColor")
                        .ConfigureRefresh(refresh =>

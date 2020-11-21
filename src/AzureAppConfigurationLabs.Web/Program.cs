@@ -24,60 +24,62 @@ namespace AzureAppConfigurationLabs.Web
                     webBuilder.ConfigureAppConfiguration((context, config) =>
                     {
                         var settings = config.Build();
-
-                        // Way-1
-                        // Connect to Azure App Configuration using the Connection String.
-                        var appConfigurationConnectionString = settings["AzureAppConfiguration:ConnectionString"];
-                        //config.AddAzureAppConfiguration(appConfigurationConnectionString);
-                        config.AddAzureAppConfiguration(options =>
+                        if (context.HostingEnvironment.IsDevelopment())
                         {
-                            options.Connect(appConfigurationConnectionString).ConfigureRefresh((refreshOptions) =>
+                            // Way-1
+                            // Connect to Azure App Configuration using the Connection String.
+                            var appConfigurationConnectionString = settings["AzureAppConfiguration:ConnectionString"];
+                            //config.AddAzureAppConfiguration(appConfigurationConnectionString);
+                            config.AddAzureAppConfiguration(options =>
                             {
+                                options.Connect(appConfigurationConnectionString).ConfigureRefresh((refreshOptions) =>
+                                {
                                 // indicates that all configuration should be refreshed when the given key has changed.
                                 refreshOptions.Register(key: "Settings:Sentinel", refreshAll: true);
-                                refreshOptions.SetCacheExpiration(TimeSpan.FromSeconds(5));
-                            }).UseFeatureFlags();
-                        });
+                                    refreshOptions.SetCacheExpiration(TimeSpan.FromSeconds(5));
+                                }).UseFeatureFlags();
+                            });
 
+                            //// Way-3
+                            //// Misc: Use App Configuration values as well as Key Vault references.
+                            //// You can now access Key Vault references just like any other App Configuration key.
+                            //// The config provider will use the KeyVaultClient that you configured to authenticate to Key Vault and retrieve the value.
+                            //var azureServiceTokenProvider = new AzureServiceTokenProvider();
+                            //var keyVaultClient = new KeyVaultClient(new KeyVaultClient.AuthenticationCallback(azureServiceTokenProvider.KeyVaultTokenCallback));
 
-                        // Way-2
-                        // Connect to Azure App Configuration using the Managed Identity
-                        var appConfigurationEndpoint = settings["AzureAppConfiguration:Endpoint"];
+                            //config.AddAzureAppConfiguration(options => 
+                            //    options.Connect(appConfigurationConnectionString)
+                            //        .UseAzureKeyVault(keyVaultClient)
+                            //    );
+                        }
+                        else
+                        {
+                            // Way-2
+                            // Connect to Azure App Configuration using the Managed Identity
+                            var appConfigurationEndpoint = settings["AzureAppConfiguration:Endpoint"];
 
-                        //if (!string.IsNullOrEmpty(appConfigurationEndpoint))
-                        //{
-                        //    config.AddAzureAppConfiguration(options =>
-                        //    {
-                        //        options.Connect(new Uri(appConfigurationEndpoint), new ManagedIdentityCredential("YtB9-l0-s0:wLoLgJN/gvBQZKPCZsgc"));
-                        //        //options.Connect(new Uri(appConfigurationEndpoint), new DefaultAzureCredential())
-                        //        //    .Select(keyFilter: "Settings:*")
-                        //        //    .ConfigureRefresh((refreshOptions) =>
-                        //        //    {
-                        //        //        // Indicates that all configuration should be refreshed when the given key has changed.
-                        //        //        refreshOptions.Register(key: "Settings:RefreshRate", refreshAll: true);
-                        //        //    });
-                        //    });
-                        //}
+                            if (!string.IsNullOrEmpty(appConfigurationEndpoint))
+                            {
+                                config.AddAzureAppConfiguration(options =>
+                                {
+                                    //options.Connect(new Uri(appConfigurationEndpoint), new ManagedIdentityCredential("YtB9-l0-s0:wLoLgJN/gvBQZKPCZsgc"));
+                                    options.Connect(new Uri(appConfigurationEndpoint), new DefaultAzureCredential());
+                                    //    .Select(keyFilter: "Settings:*")
+                                    //    .ConfigureRefresh((refreshOptions) =>
+                                    //    {
+                                    //        // Indicates that all configuration should be refreshed when the given key has changed.
+                                    //        refreshOptions.Register(key: "Settings:RefreshRate", refreshAll: true);
+                                    //    });
+                                });
+                            }
 
-                        // OLD: When using version 2.1 in the following way, it works fine
-                        //if (!string.IsNullOrEmpty(appConfigurationEndpoint))
-                        //{
-                        //    config.AddAzureAppConfiguration(options =>
-                        //        options.ConnectWithManagedIdentity(appConfigurationEndpoint));
-                        //}
-
-
-                        //// Way-3
-                        //// Misc: Use App Configuration values as well as Key Vault references.
-                        //// You can now access Key Vault references just like any other App Configuration key.
-                        //// The config provider will use the KeyVaultClient that you configured to authenticate to Key Vault and retrieve the value.
-                        //var azureServiceTokenProvider = new AzureServiceTokenProvider();
-                        //var keyVaultClient = new KeyVaultClient(new KeyVaultClient.AuthenticationCallback(azureServiceTokenProvider.KeyVaultTokenCallback));
-
-                        //config.AddAzureAppConfiguration(options => 
-                        //    options.Connect(appConfigurationConnectionString)
-                        //        .UseAzureKeyVault(keyVaultClient)
-                        //    );
+                            // OLD: When using version 2.1 in the following way, it works fine
+                            //if (!string.IsNullOrEmpty(appConfigurationEndpoint))
+                            //{
+                            //    config.AddAzureAppConfiguration(options =>
+                            //        options.ConnectWithManagedIdentity(appConfigurationEndpoint));
+                            //}
+                        }
                     });
 
                     webBuilder.UseStartup<Startup>();
