@@ -9,7 +9,7 @@ namespace AzureAppConfigurationLabs.Demo.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class CustomerController : ControllerBase
+    public class TestController : ControllerBase
     {
         #region Members
 
@@ -19,7 +19,7 @@ namespace AzureAppConfigurationLabs.Demo.Controllers
 
         #region Ctor
 
-        public CustomerController(IOptionsSnapshot<Settings> options)
+        public TestController(IOptionsSnapshot<Settings> options)
         {
             _settings = options.Value;
         }

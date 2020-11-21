@@ -24,18 +24,51 @@ namespace AzureAppConfigurationLabs.Web
                     webBuilder.ConfigureAppConfiguration((context, config) =>
                     {
                         var settings = config.Build();
-                        if (context.HostingEnvironment.IsDevelopment())
+                        if (!context.HostingEnvironment.IsDevelopment())
                         {
-                            // Way-1
+                            // Way-1: Secure way (For Production scenario, works with Azure Services like App Service, VM, VMSS, Functions)
+                            // Connect to Azure App Configuration using the Managed Identity
+                            // Prerequisite: The application identity is granted "App Configuration Data Reader" role in the App Configuration store
+                            
+                            var appConfigurationEndpoint = settings["AzureAppConfigurationEndpoint"];
+
+                            if (!string.IsNullOrEmpty(appConfigurationEndpoint))
+                            {
+                                config.AddAzureAppConfiguration(options =>
+                                {
+                                    options.Connect(new Uri(appConfigurationEndpoint), new DefaultAzureCredential());
+                                    //    .Select(keyFilter: "MyApp:*")
+                                    //    .Select(keyFilter: "Settings:*")
+                                    //    .ConfigureRefresh((refreshOptions) =>
+                                    //    {
+                                    //        // Indicates that all configuration should be refreshed when the given key has changed.
+                                    //        refreshOptions.Register(key: "Settings:RefreshRate", refreshAll: true);
+                                    //    });
+                                    
+                                    //// Not recommanded
+                                    //options.Connect(new Uri(appConfigurationEndpoint), new ManagedIdentityCredential("YtB9-l0-s0:wLoLgJN/gvBQZKPCZsgc"));
+                                });
+                            }
+
+                            // OLD: When using version 2.1 in the following way, it works fine
+                            //if (!string.IsNullOrEmpty(appConfigurationEndpoint))
+                            //{
+                            //    config.AddAzureAppConfiguration(options =>
+                            //        options.ConnectWithManagedIdentity(appConfigurationEndpoint));
+                            //}
+                        }
+                        else
+                        {
+                            // Way-2
                             // Connect to Azure App Configuration using the Connection String.
-                            var appConfigurationConnectionString = settings["AzureAppConfiguration:ConnectionString"];
+                            var appConfigurationConnectionString = settings["AzureAppConfigurationConnectionString"];
                             //config.AddAzureAppConfiguration(appConfigurationConnectionString);
                             config.AddAzureAppConfiguration(options =>
                             {
                                 options.Connect(appConfigurationConnectionString).ConfigureRefresh((refreshOptions) =>
                                 {
-                                // indicates that all configuration should be refreshed when the given key has changed.
-                                refreshOptions.Register(key: "Settings:Sentinel", refreshAll: true);
+                                    // indicates that all configuration should be refreshed when the given key has changed.
+                                    refreshOptions.Register(key: "Settings:Sentinel", refreshAll: true);
                                     refreshOptions.SetCacheExpiration(TimeSpan.FromSeconds(5));
                                 }).UseFeatureFlags();
                             });
@@ -52,34 +85,6 @@ namespace AzureAppConfigurationLabs.Web
                             //        .UseAzureKeyVault(keyVaultClient)
                             //    );
                         }
-                        else
-                        {
-                            // Way-2
-                            // Connect to Azure App Configuration using the Managed Identity
-                            var appConfigurationEndpoint = settings["AzureAppConfiguration:Endpoint"];
-
-                            if (!string.IsNullOrEmpty(appConfigurationEndpoint))
-                            {
-                                config.AddAzureAppConfiguration(options =>
-                                {
-                                    //options.Connect(new Uri(appConfigurationEndpoint), new ManagedIdentityCredential("YtB9-l0-s0:wLoLgJN/gvBQZKPCZsgc"));
-                                    options.Connect(new Uri(appConfigurationEndpoint), new DefaultAzureCredential());
-                                    //    .Select(keyFilter: "Settings:*")
-                                    //    .ConfigureRefresh((refreshOptions) =>
-                                    //    {
-                                    //        // Indicates that all configuration should be refreshed when the given key has changed.
-                                    //        refreshOptions.Register(key: "Settings:RefreshRate", refreshAll: true);
-                                    //    });
-                                });
-                            }
-
-                            // OLD: When using version 2.1 in the following way, it works fine
-                            //if (!string.IsNullOrEmpty(appConfigurationEndpoint))
-                            //{
-                            //    config.AddAzureAppConfiguration(options =>
-                            //        options.ConnectWithManagedIdentity(appConfigurationEndpoint));
-                            //}
-                        }
                     });
 
                     webBuilder.UseStartup<Startup>();
@@ -92,6 +97,8 @@ namespace AzureAppConfigurationLabs.Web
 #region Reference
 
 /*
+https://github.com/Azure/AppConfiguration
+https://github.com/Azure/AppConfiguration/blob/main/examples/DotNetCore/WebDemo/Microsoft.Azure.AppConfiguration.WebDemo/Program.cs
 https://docs.microsoft.com/en-us/azure/azure-app-configuration/quickstart-aspnet-core-app
 https://docs.microsoft.com/en-us/azure/azure-app-configuration/howto-integrate-azure-managed-service-identity
 */
