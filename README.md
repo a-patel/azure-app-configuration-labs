@@ -17,7 +17,8 @@ Please refer to below articles of my publication [Awesome Azure](https://medium.
 
 
 
-## Basic Usage :page_facing_up:
+## Usage: Web/API Application :page_facing_up:
+
 
 ### Step 1 : Install the package :package:
 
@@ -25,6 +26,7 @@ Please refer to below articles of my publication [Awesome Azure](https://medium.
 
 ```Powershell
 PM> Install-Package Microsoft.Azure.AppConfiguration.AspNetCore
+PM> Install-Package Microsoft.FeatureManagement.AspNetCore
 PM> Install-Package Azure.Identity
 ```
 
@@ -37,10 +39,10 @@ PM> Install-Package Azure.Identity
 
 ```js
 {
-  // Way-1: Connect to Azure App Configuration using the Managed Identity
+  // Way-1: Connect to Azure App Configuration using the Managed Identity (for Production Scenario)
   "AzureAppConfigurationEndpoint": "https://[YOUR_APP_CONFIGURATION_NAME].azconfig.io",
 
-  // Way-2: Connect to Azure App Configuration using the Connection String
+  // Way-2: Connect to Azure App Configuration using the Connection String (for Development Scenario)
   "AzureAppConfigurationConnectionString": "[YOUR_APP_CONFIGURATION_CONNECTIONSTRING]",
 
   // Sample Settings of your application
@@ -185,6 +187,148 @@ public class TestController : ControllerBase
     public IActionResult GetBetaSettings()
     {
         return Ok("This is Beta feature only");
+    }
+
+    #endregion
+}
+```
+
+
+
+---
+
+
+
+## Usage: Azure Functions :page_facing_up:
+
+
+### Step 1 : Install the package :package:
+
+> To install NuGet, run the following command in the [Package Manager Console](http://docs.nuget.org/docs/start-here/using-the-package-manager-console)
+
+```Powershell
+PM> Install-Package Microsoft.Extensions.Configuration.AzureAppConfiguration
+PM> Install-Package Microsoft.FeatureManagement
+```
+
+
+### Step 2 : Configuration 🔨
+
+> Here are samples that show you how to config.
+
+##### 2.1 : AppSettings
+
+```js
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet",
+    "AzureAppConfigurationConnectionString": "[YOUR_APP_CONFIGURATION_CONNECTIONSTRING]"
+  },
+
+  "Settings": {
+    "AppName": "Azure App Configuration with Azure Functions Labs",
+    "Version": 1.0,
+    "FontSize": 50,
+    "RefreshRate": 1000,
+    "Language": "English",
+    "Messages": "Hello There. Thanks for using Azure App Configuration with Azure Functions.",
+    "BackgroundColor": "Black"
+  }
+}
+```
+
+##### 2.2 : Configure (Function)Startup Class
+
+```cs
+class Startup : FunctionsStartup
+{
+    public override void Configure(IFunctionsHostBuilder builder)
+    {
+        IConfigurationRefresher configurationRefresher = null;
+
+        // Load configuration from Azure App Configuration
+        ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
+        configurationBuilder.AddAzureAppConfiguration(options =>
+        {
+            options.Connect(Environment.GetEnvironmentVariable("AzureAppConfigurationConnectionString"))
+                   // Load all keys that start with `TestApp:`
+                   .Select("MyFuncApp:*")
+                   // Configure to reload configuration if the registered 'Sentinel' key is modified
+                   .ConfigureRefresh(refreshOptions =>
+                        refreshOptions.Register("MyFuncApp:Settings:Sentinel", refreshAll: true)
+                    )
+                   // Indicate to load feature flags
+                   .UseFeatureFlags();
+            configurationRefresher = options.GetRefresher();
+        });
+        IConfiguration configuration = configurationBuilder.Build();
+
+        // Make settings, feature manager and configuration refresher available through DI
+        builder.Services.Configure<Settings>(configuration.GetSection("MyFuncApp:Settings"));
+        builder.Services.AddFeatureManagement(configuration);
+        builder.Services.AddSingleton<IConfigurationRefresher>(configurationRefresher);
+    }
+    }
+```
+
+
+### Step 3 : Use in fucntions :memo:
+
+```cs
+public class DemoFunctions
+{
+    #region Members
+
+    private readonly Settings _settings;
+    private readonly IFeatureManagerSnapshot _featureManagerSnapshot;
+    private readonly IConfigurationRefresher _configurationRefresher;
+
+    #endregion
+
+    #region Ctor
+
+    public DemoFunctions(IOptionsSnapshot<Settings> settings, IFeatureManagerSnapshot featureManagerSnapshot, IConfigurationRefresher configurationRefresher)
+    {
+        _settings = settings.Value;
+        _featureManagerSnapshot = featureManagerSnapshot;
+        _configurationRefresher = configurationRefresher;
+    }
+
+    #endregion
+
+    #region Functions
+
+    [FunctionName("GetSettings")]
+    public async Task<IActionResult> GetSettings(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req,
+        ILogger log)
+    {
+        // The configuration is refreshed asynchronously without blocking the execution of the current function.
+        _ = await _configurationRefresher.TryRefreshAsync();
+
+        string appName = _settings.AppName;
+
+        return appName != null
+            ? (ActionResult)new OkObjectResult(appName)
+            : new BadRequestObjectResult($"Please create a key-value with the key 'MyFuncApp:Settings:Message' in Azure App Configuration.");
+    }
+
+    [FunctionName("ShowBetaFeature")]
+    public async Task<IActionResult> ShowBetaFeature(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req,
+        ILogger log)
+    {
+        await _configurationRefresher.TryRefreshAsync();
+
+        string featureName = "Beta";
+        bool featureEnalbed = await _featureManagerSnapshot.IsEnabledAsync(featureName);
+
+        return featureEnalbed
+            ? (ActionResult)new OkObjectResult($"{featureName} feature is On")
+            : new BadRequestObjectResult($"{featureName} feature is Off (or the feature flag '{featureName}' is not present in Azure App Configuration).");
+
     }
 
     #endregion
