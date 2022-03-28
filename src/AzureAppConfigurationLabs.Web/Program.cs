@@ -24,6 +24,10 @@ namespace AzureAppConfigurationLabs.Web
                     webBuilder.ConfigureAppConfiguration((context, config) =>
                     {
                         var settings = config.Build();
+                        var credential = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == EnvironmentName.Development
+                            ? new DefaultAzureCredential()
+                            : (TokenCredential)new ManagedIdentityCredential();
+                    
                         if (!context.HostingEnvironment.IsDevelopment())
                         {
                             // Way-1: Secure way (For Production scenario, works with Azure Services like App Service, VM, VMSS, Functions)
@@ -36,7 +40,7 @@ namespace AzureAppConfigurationLabs.Web
                             {
                                 config.AddAzureAppConfiguration(options =>
                                 {
-                                    options.Connect(new Uri(appConfigurationEndpoint), new DefaultAzureCredential());
+                                    options.Connect(new Uri(appConfigurationEndpoint), credential);
                                     //    .Select(keyFilter: "MyApp:*")
                                     //    .Select(keyFilter: "Settings:*")
                                     //    .ConfigureRefresh((refreshOptions) =>
@@ -65,7 +69,7 @@ namespace AzureAppConfigurationLabs.Web
                             //config.AddAzureAppConfiguration(appConfigurationConnectionString);
                             config.AddAzureAppConfiguration(options =>
                             {
-                                options.Connect(appConfigurationConnectionString).ConfigureRefresh((refreshOptions) =>
+                                options.Connect(appConfigurationConnectionString, credential).ConfigureRefresh((refreshOptions) =>
                                 {
                                     // indicates that all configuration should be refreshed when the given key has changed.
                                     refreshOptions.Register(key: "Settings:Sentinel", refreshAll: true);
