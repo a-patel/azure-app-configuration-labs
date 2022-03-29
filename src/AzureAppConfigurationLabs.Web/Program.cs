@@ -40,7 +40,11 @@ namespace AzureAppConfigurationLabs.Web
                             {
                                 config.AddAzureAppConfiguration(options =>
                                 {
-                                    options.Connect(new Uri(appConfigurationEndpoint), credential);
+                                    options.Connect(new Uri(appConfigurationEndpoint), credential)
+                                    .ConfigureKeyVault(kv =>
+                                    {
+                                        kv.SetCredential(credential);
+                                    };
                                     //    .Select(keyFilter: "MyApp:*")
                                     //    .Select(keyFilter: "Settings:*")
                                     //    .ConfigureRefresh((refreshOptions) =>
@@ -69,12 +73,18 @@ namespace AzureAppConfigurationLabs.Web
                             //config.AddAzureAppConfiguration(appConfigurationConnectionString);
                             config.AddAzureAppConfiguration(options =>
                             {
-                                options.Connect(appConfigurationConnectionString, credential).ConfigureRefresh((refreshOptions) =>
+                                options.Connect(appConfigurationConnectionString, credential)
+                                .ConfigureKeyVault(kv =>
+                                {
+                                    kv.SetCredential(credential);
+                                };
+                                .ConfigureRefresh((refreshOptions) =>
                                 {
                                     // indicates that all configuration should be refreshed when the given key has changed.
                                     refreshOptions.Register(key: "Settings:Sentinel", refreshAll: true);
                                     refreshOptions.SetCacheExpiration(TimeSpan.FromSeconds(5));
-                                }).UseFeatureFlags();
+                                })
+                                .UseFeatureFlags();
                             });
 
                             //// Way-3
